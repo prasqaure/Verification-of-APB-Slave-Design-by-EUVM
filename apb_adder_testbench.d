@@ -65,27 +65,31 @@ class apb_driver(int DW, int AW): uvm_driver!(apb_seq_item!(DW, AW)) {
     uvm_config_db!(ApbLiteIntf!(DW, AW)).get(this, "", "apb_if", apb_if);
     assert(apb_if !is null);
   }
-  override void run_phase(uvm_phase phase) {
+override void run_phase(uvm_phase phase) {
     while (true) {
-      seq_item_port.get_next_item(tr);
-      apb_if.PADDR = tr.addr;
-      apb_if.PSEL = 1;
-      apb_if.PENABLE = 1;
-      if (tr.data !is null) { // Write case
-        apb_if.PWDATA = tr.data;
-        apb_if.PWRITE = 1;
-      } else { // Read case
-        apb_if.PWRITE = 0;
-      }
-      wait(apb_if.PREADY);
-      if (tr.data is null) { // Read response
-        tr.data = apb_if.PRDATA;
-      }   
-      apb_if.PENABLE = 0;
-      apb_if.PSEL = 0;
-      seq_item_port.item_done();
+        seq_item_port.get_next_item(tr);
+        
+        apb_if.PADDR = tr.addr;
+        apb_if.PSEL = 1;
+        apb_if.PENABLE = 1;
+        apb_if.PWRITE = tr.PWRITE; // Determine if it's a read or write
+
+        if (tr.PWRITE == 1) { // Write transaction
+            apb_if.PWDATA = tr.data;
+        }
+
+        wait(apb_if.PREADY);
+
+        if (tr.PWRITE == 0) { // Read transaction
+            tr.data = apb_if.PRDATA;
+        }
+
+        apb_if.PENABLE = 0;
+        apb_if.PSEL = 0;
+
+        seq_item_port.item_done();
     }
-  }
+}
 }
 class apb_monitor(int DW, int AW): uvm_monitor {
   mixin uvm_component_utils;
