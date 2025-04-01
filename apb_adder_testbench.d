@@ -90,7 +90,7 @@ override void run_phase(uvm_phase phase) {
         seq_item_port.item_done();
     }
 }
-}
+
 class apb_monitor(int DW, int AW): uvm_monitor {
   mixin uvm_component_utils;
   ApbLiteIntf!(DW, AW) apb_if;
@@ -152,7 +152,9 @@ class apb_test(int DW, int AW): uvm_test {
     phase.drop_objection(this);
   }
 }
+}
 void main() {
     run_test("apb_test!(32, 32)");
 }
+
 
