@@ -94,17 +94,32 @@ override void run_phase(uvm_phase phase) {
 class apb_monitor(int DW, int AW): uvm_monitor {
   mixin uvm_component_utils;
   ApbLiteIntf!(DW, AW) apb_if;
+  apb_seq_item!(DW, AW) tr;
+  uvm_analysis_port!(apb_seq_item!(DW, AW)) mon_ap;
+
   this(string name, uvm_component parent) {
     super(name, parent);
     uvm_config_db!(ApbLiteIntf!(DW, AW)).get(this, "", "apb_if", apb_if);
+    mon_ap mon_ap_inst = mon_ap.type.create("mon_ap", this);
   }
+
   override void run_phase(uvm_phase phase) {
     while (true) {
-      wait(apb_if.PREADY);
-      uvm_info("APB_MON", "Transaction observed", UVM_MEDIUM);
+      wait(apb_if.PREADY);  // Wait for the transaction to complete
+      
+      // Capture transaction fields
+      tr = apb_seq_item!(DW, AW).type_id.create("tr");
+      tr.addr   = apb_if.PADDR;
+      tr.PWRITE = apb_if.PWRITE;
+      tr.PWDATA = apb_if.PWDATA;
+      tr.data   = apb_if.PRDATA;
+      
+      // Send transaction to the analysis port
+      mon_ap.write(tr);
     }
   }
 }
+
 class apb_agent(int DW, int AW): uvm_agent {
   mixin uvm_component_utils;
   apb_sequencer!(DW, AW) seqr;
@@ -156,5 +171,6 @@ class apb_test(int DW, int AW): uvm_test {
 void main() {
     run_test("apb_test!(32, 32)");
 }
+
 
 
