@@ -62,12 +62,5 @@ The APB slave module (`apb_slave.sv`) includes the following signals:
 9. **Test (`apb_test`)**  
    - Runs the EUVM sequence on the APB environment.
 
----
-
-## Running the EUVM Testbench
-The testbench execution starts with:
-```cpp
-void main() {
-    run_test("apb_test!(32, 32)");
-}
+--
 
